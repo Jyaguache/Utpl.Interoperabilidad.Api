@@ -28,6 +28,16 @@ def obtener_producto (producto_id: int):
             return producto
     raise HTTPException(status_code=404, detail="Producto no existe")
 
+@app.delete("/productos/{producto_id}")
+def eliminar_producto (producto_id: int):
+    producto = next((p for p in productoList if p.id == producto_id), None)
+    if producto:
+        productoList.remove(producto)
+        return {"mensaje": "producto eliminada exitosamente"}
+    else:
+        raise HTTPException(status_code=404, detail="producto no encontrada")
+  
+
 @app.get("/")
 def read_root():
     return {"Hello": "Interoperabilidad Tarea SEM7"}
