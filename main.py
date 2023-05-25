@@ -30,4 +30,4 @@ def obtener_producto (producto_id: int):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "Interoperabilidad Jimmy Y"}
+    return {"Hello": "Interoperabilidad Tarea SEM7"}

@@ -3,7 +3,7 @@
 API para describir un producto
 
 ## Secuencia para despliegue
-1. COnfigurar el archivo con el archivo: uvicorn main:app --host=0.0.0.0
+1. Configurar el archivo con el archivo: uvicorn main:app --host=0.0.0.0
 2. Crear cuenta en on render
 3. Vincular repositorio de GITHUB con on render
 4. Crear servicio web en on render
