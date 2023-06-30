@@ -9,7 +9,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from auth import authenticate
 
-#seccion mongo importar libreria
+# Mongo importar libreria
 import pymongo
 
 import spotipy
@@ -47,12 +47,12 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="Utpl Interoperabilidad Tarea Sem-12",
+    title="Utpl Interoperabilidad API Tarea Sem-12",
     description= description,
     version="0.0.1",
     terms_of_service="http://example.com/terms/",
     contact={
-        "name": "Jimmy Yaguache",
+        "name": "Jimmy Javier Yaguache López",
         "url": "http://x-force.example.com/contact/",
         "email": "jjyaguache1@utpl.edu.ec",
     },
@@ -63,15 +63,35 @@ app = FastAPI(
     openapi_tags = tags_metadata
 )
 
+#para agregar seguridad a nuestro api
+#security = HTTPBasic()
+
+#configuracion de mongo 
+cliente = pymongo.MongoClient("mongodb+srv://jyutplinteroperabilidad:TGZqGHBPNDfUoKOl@jimmyy.t3n2rcm.mongodb.net/?retryWrites=true&w=majority")
+database = cliente["inventario"]
+coleccion = database["productos"]
+
 class Producto (BaseModel):
     id: int
     nombre: str
     tipo: str
     categoria: Optional[str] = None
 
-productoList = []
 
-@app.post("/productos", response_model=Producto)
+#class ProductoEntrada (BaseModel):
+ #   nombre:str
+  #  tipo: str
+   # categoria: Optional[str] = None
+
+#class ProductoEntradaV2 (BaseModel):
+ #   nombre:str
+  #  tipo: str
+   # categoria: Optional[str] = None
+
+
+productoList = []
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@app.post("/productos", response_model=Producto, tags = [productos])
 def crear_producto(product: Producto):
     productoList.append(product)
     return product
