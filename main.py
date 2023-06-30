@@ -46,14 +46,14 @@ app = FastAPI(
 )
 
 class Producto (BaseModel):
-    id: int
-    cod: int
+    id: str
+    cod: str
     nombre: str
     tipo: str
     categoria: Optional[str] = None
 
 class ProductoEntrada (BaseModel):
-    cod: int
+    cod: str
     nombre:str
     tipo: str
     categoria: Optional[str] = None
