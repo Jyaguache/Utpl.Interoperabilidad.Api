@@ -44,27 +44,27 @@ app = FastAPI(
     },
     openapi_tags = tags_metadata   
 )
+
 class Producto (BaseModel):
     id: int
+    cod: int
     nombre: str
     tipo: str
     categoria: Optional[str] = None
 
 class ProductoEntrada (BaseModel):
+    cod: int
     nombre:str
     tipo: str
     categoria: Optional[str] = None
 
-
-
-
-productoList = []
+inventarioList = []
 
 @app.post("/producto", response_model=Producto, tags = ["productos"])
 @version(1,0)
-async def crear_producto(produE: ProductoEntrada):
+async def crear_producto(invenT: ProductoEntrada):
     print ('Creado')
-    itemProducto = Producto (id=str(uuid.uuid4()), nombre = produE.nombre, tipo = produE.tipo, categoria = produE.categoria)
+    itemProducto = Producto (id=str(uuid.uuid4()), cod = invenT.cod, nombre = invenT.nombre, tipo = invenT.tipo, categoria = invenT.categoria)
     resultadoBase = coleccion.insert_one(itemProducto.dict())
     return itemProducto
 
@@ -84,32 +84,26 @@ def obtener_producto(producto_id: str):
     else:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-## Agregar busqueda por tipo.    
-@app.get("/producto/tipo/{tip_num}", response_model=Producto, tags = ["productos"])
+## Agregar busqueda por cod.    
+@app.get("/producto/codigo/{cod_num}", response_model=Producto, tags = ["productos"])
 @version(2,0)
-def obtener_tip(tip_num: int):
-    item = coleccion.find_one({"tip": tip_num})
+def obtener_cod(cod_num: int):
+    item = coleccion.find_one({"cod": cod_num})
     if item:
         return item
     else:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-    ##codigo sin base de datos
-    ##for hab in itemHuesped:
-      ##  if huesped_hab == huesped_hab:
-        ##    return hab
-    ##raise HTTPException(status_code=404, detail="huesped no encontrada")
-
-@app.delete("/producto/{producto_id}", tags = ["productos"])
+@app.delete("/producto/{inventario_id}", tags = ["productos"])
 @version(1,0)
-def eliminar_producto (producto_id: int):
-    producto = next((p for p in productoList if p.id == producto_id), None)
-    if producto:
-        productoList.remove(producto)
-        return {"mensaje": "Producto eliminado exitosamente"}
+def eliminar_producto (inventario_id: int):
+    inventario = next((p for p in inventarioList if p.id == inventario_id), None)
+    if inventario:
+        inventarioList.remove(inventario)
+        return {"mensaje": "Inventario eliminado exitosamente"}
     else:
-        raise HTTPException(status_code=404, detail="Producto no encontrada")
-    producto_eliminado = productoList.pop(producto_id)
+        raise HTTPException(status_code=404, detail="Inventario no encontrada")
+    producto_eliminado = inventarioList.pop(inventario_id)
 
 @app.get("/")
 @version(1,0)
