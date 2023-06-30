@@ -3,21 +3,14 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 
+#seccion mongo_importar libreria
+import pymongo
 from fastapi_versioning import VersionedFastAPI, version
 
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-
-from auth import authenticate
-
-# Mongo importar libreria
-import pymongo
-
-import spotipy
-
-sp = spotipy.Spotify(auth_manager=spotipy.oauth2.SpotifyClientCredentials(
-    client_id='c8519595485648c3949369793de3e366',
-    client_secret='d266e54ea24346a7b278445be87cd400'
-))
+#configuracion de mongodb
+cliente = pymongo.MongoClient("mongodb+srv://jyutplinteroperabilidad:TGZqGHBPNDfUoKOl@jimmyy.t3n2rcm.mongodb.net/?retryWrites=true&w=majority")
+database = cliente["inventario"]
+coleccion = database["productos"]
 
 description = """
 Utpl Interoperabilidad API - API Productos de un inventario. 🚀
@@ -27,23 +20,12 @@ Utpl Interoperabilidad API - API Productos de un inventario. 🚀
 Tu puedes crear un producto.
 Tu puedes listar productos.
 
-
-## Tipos
-
-Usted podrá:
-
-* **Crear tipos de productos** (_not implemented_).
 """
-
 tags_metadata = [
     {
         "name":"productos",
-        "description": "Permite realizar un crud completo de un producto (listar)"
-    },
-    {
-        "name":"tipos",
-        "description": "Permite realizar un crud completo de tipos de productos"
-    },
+        "description":"Permite realizar un crud completo de los productos del inventario (listar)"
+    }
 ]
 
 app = FastAPI(
@@ -53,70 +35,85 @@ app = FastAPI(
     terms_of_service="http://example.com/terms/",
     contact={
         "name": "Jimmy Javier Yaguache López",
-        "url": "http://x-force.example.com/contact/",
+        "url": "https://github.com/Jyaguache/Utpl.Interoperabilidad.Api.git",
         "email": "jjyaguache1@utpl.edu.ec",
     },
     license_info={
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
-    openapi_tags = tags_metadata
+    openapi_tags = tags_metadata   
 )
-
-#para agregar seguridad a nuestro api
-#security = HTTPBasic()
-
-#configuracion de mongo 
-cliente = pymongo.MongoClient("mongodb+srv://jyutplinteroperabilidad:TGZqGHBPNDfUoKOl@jimmyy.t3n2rcm.mongodb.net/?retryWrites=true&w=majority")
-database = cliente["inventario"]
-coleccion = database["productos"]
-
 class Producto (BaseModel):
     id: int
     nombre: str
     tipo: str
     categoria: Optional[str] = None
 
+class ProductoEntrada (BaseModel):
+    nombre:str
+    tipo: str
+    categoria: Optional[str] = None
 
-#class ProductoEntrada (BaseModel):
- #   nombre:str
-  #  tipo: str
-   # categoria: Optional[str] = None
 
-#class ProductoEntradaV2 (BaseModel):
- #   nombre:str
-  #  tipo: str
-   # categoria: Optional[str] = None
 
 
 productoList = []
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@app.post("/productos", response_model=Producto, tags = [productos])
-def crear_producto(product: Producto):
-    productoList.append(product)
-    return product
 
-@app.get("/productos", response_model=List[Producto])
-def get_productos():
-    return productoList
+@app.post("/producto", response_model=Producto, tags = ["productos"])
+@version(1,0)
+async def crear_producto(produE: ProductoEntrada):
+    print ('Creado')
+    itemProducto = Producto (id=str(uuid.uuid4()), nombre = produE.nombre, tipo = produE.tipo, categoria = produE.categoria)
+    resultadoBase = coleccion.insert_one(itemProducto.dict())
+    return itemProducto
 
-@app.get("/productos/{producto_id}", response_model=Producto)
-def obtener_producto (producto_id: int):
-    for producto in productoList:
-        if producto.id == producto_id:
-            return producto
-    raise HTTPException(status_code=404, detail="Producto no existe")
+@app.get("/producto", response_model=List[Producto], tags = ["productos"])
+@version(1,0)
+def get_producto():
+    itemProducto = list(coleccion.find()) ##devolver de l base de datos.
+    return itemProducto
 
-@app.delete("/productos/{producto_id}")
+## busqueda por id
+@app.get("/producto/{producto_id}", response_model=Producto, tags = ["productos"])
+@version(1,0)
+def obtener_producto(producto_id: str):
+    item = coleccion.find_one({"id": producto_id})
+    if item:
+        return item
+    else:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+## Agregar busqueda por tipo.    
+@app.get("/producto/tipo/{tip_num}", response_model=Producto, tags = ["productos"])
+@version(2,0)
+def obtener_tip(tip_num: int):
+    item = coleccion.find_one({"tip": tip_num})
+    if item:
+        return item
+    else:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    ##codigo sin base de datos
+    ##for hab in itemHuesped:
+      ##  if huesped_hab == huesped_hab:
+        ##    return hab
+    ##raise HTTPException(status_code=404, detail="huesped no encontrada")
+
+@app.delete("/producto/{producto_id}", tags = ["productos"])
+@version(1,0)
 def eliminar_producto (producto_id: int):
     producto = next((p for p in productoList if p.id == producto_id), None)
     if producto:
         productoList.remove(producto)
-        return {"mensaje": "producto eliminada exitosamente"}
+        return {"mensaje": "Producto eliminado exitosamente"}
     else:
-        raise HTTPException(status_code=404, detail="producto no encontrada")
-  
+        raise HTTPException(status_code=404, detail="Producto no encontrada")
+    producto_eliminado = productoList.pop(producto_id)
 
 @app.get("/")
+@version(1,0)
 def read_root():
-    return {"Hello": "Interoperabilidad Tarea SEM7"}
+    return {"Hello": "INTEROPERABILIDAD TAREA SEM12"}
+
+app = VersionedFastAPI(app)
