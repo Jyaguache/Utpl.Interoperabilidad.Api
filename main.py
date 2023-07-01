@@ -87,7 +87,7 @@ def obtener_producto(producto_id: str):
 ## Agregar busqueda por cod.    
 @app.get("/producto/codigo/{cod_num}", response_model=Producto, tags = ["productos"])
 @version(2,0)
-def obtener_cod(cod_num: int):
+def obtener_cod(cod_num: str):
     item = coleccion.find_one({"cod": cod_num})
     if item:
         return item
