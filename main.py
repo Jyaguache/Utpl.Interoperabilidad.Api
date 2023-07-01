@@ -57,7 +57,7 @@ class Producto (BaseModel):
     nombre: str
     tipo: str
     categoria: Optional[str] = None
-    familia: Optional[str] = None
+    
 
 class ProductoEntrada (BaseModel):
     cod: str
@@ -70,8 +70,14 @@ inventarioList = []
 
 @app.post("/producto", response_model=Producto, tags = ["productos"])
 @version(1,0)
+async def crear_producto(invenT: Producto):
+    itemProducto = Producto (id=str(uuid.uuid4()), cod = invenT.cod, nombre = invenT.nombre, tipo = invenT.tipo, categoria = invenT.categoria)
+    resultadoBase = coleccion.insert_one(itemProducto.dict())
+    return itemProducto
+
+@app.post("/producto", response_model=Producto, tags = ["productos"])
+@version(2,0)
 async def crear_producto(invenT: ProductoEntrada):
-    print ('Creado')
     itemProducto = Producto (id=str(uuid.uuid4()), cod = invenT.cod, nombre = invenT.nombre, tipo = invenT.tipo, categoria = invenT.categoria, familia = invenT.familia)
     resultadoBase = coleccion.insert_one(itemProducto.dict())
     return itemProducto
@@ -79,7 +85,7 @@ async def crear_producto(invenT: ProductoEntrada):
 #Seguridades
 @app.get("/producto", response_model=List[Producto], tags = ["productos"])
 @version(1, 0)
-def get_producto(credentials: HTTPBasicCredentials = Depends(security)):
+def get_productos(credentials: HTTPBasicCredentials = Depends(security)):
     authenticate(credentials)
     items = list(coleccion.find())
     print (items)
