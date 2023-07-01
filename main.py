@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional
 import uuid
@@ -6,6 +6,12 @@ import uuid
 #seccion mongo_importar libreria
 import pymongo
 from fastapi_versioning import VersionedFastAPI, version
+
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from auth import authenticate
+
+#para agregar seguridad a nuestro api
+security = HTTPBasic()
 
 #configuracion de mongodb
 cliente = pymongo.MongoClient("mongodb+srv://jyutplinteroperabilidad:TGZqGHBPNDfUoKOl@jimmyy.t3n2rcm.mongodb.net/?retryWrites=true&w=majority")
@@ -51,12 +57,14 @@ class Producto (BaseModel):
     nombre: str
     tipo: str
     categoria: Optional[str] = None
+    familia: Optional[str] = None
 
 class ProductoEntrada (BaseModel):
     cod: str
     nombre:str
     tipo: str
     categoria: Optional[str] = None
+    familia: str
 
 inventarioList = []
 
@@ -64,17 +72,26 @@ inventarioList = []
 @version(1,0)
 async def crear_producto(invenT: ProductoEntrada):
     print ('Creado')
-    itemProducto = Producto (id=str(uuid.uuid4()), cod = invenT.cod, nombre = invenT.nombre, tipo = invenT.tipo, categoria = invenT.categoria)
+    itemProducto = Producto (id=str(uuid.uuid4()), cod = invenT.cod, nombre = invenT.nombre, tipo = invenT.tipo, categoria = invenT.categoria, familia = invenT.familia)
     resultadoBase = coleccion.insert_one(itemProducto.dict())
     return itemProducto
+
+#Seguridades
+@app.get("/producto", response_model=List[Producto], tags = ["productos"])
+@version(1, 0)
+def get_producto(credentials: HTTPBasicCredentials = Depends(security)):
+    authenticate(credentials)
+    items = list(coleccion.find())
+    print (items)
+    return items
 
 @app.get("/producto", response_model=List[Producto], tags = ["productos"])
 @version(1,0)
 def get_producto():
-    itemProducto = list(coleccion.find()) ##devolver de l base de datos.
+    itemProducto = list(coleccion.find()) ##devolver toda la informacion de la base de datos.
     return itemProducto
 
-## busqueda por id
+## Agregar busqueda por id.
 @app.get("/producto/{producto_id}", response_model=Producto, tags = ["productos"])
 @version(1,0)
 def obtener_producto(producto_id: str):
@@ -86,7 +103,7 @@ def obtener_producto(producto_id: str):
 
 ## Agregar busqueda por cod.    
 @app.get("/producto/codigo/{cod_num}", response_model=Producto, tags = ["productos"])
-@version(2,0)
+@version(2,0) 
 def obtener_cod(cod_num: str):
     item = coleccion.find_one({"cod": cod_num})
     if item:
@@ -94,19 +111,17 @@ def obtener_cod(cod_num: str):
     else:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
 
-@app.delete("/producto/{inventario_id}", tags = ["productos"])
+@app.delete("/producto/{producto_id}", tags = ["productos"])
 @version(1,0)
-def eliminar_producto (inventario_id: int):
-    inventario = next((p for p in inventarioList if p.id == inventario_id), None)
-    if inventario:
-        inventarioList.remove(inventario)
-        return {"mensaje": "Inventario eliminado exitosamente"}
+def eliminar_producto (producto_id: str):
+    result = coleccion.delete_one({"id": producto_id})
+    if result.deleted_count == 1:
+        return {"mensaje": "Producto eliminado exitosamente"}
     else:
         raise HTTPException(status_code=404, detail="Inventario no encontrada")
     producto_eliminado = inventarioList.pop(inventario_id)
 
 @app.get("/")
-@version(1,0)
 def read_root():
     return {"Hello": "INTEROPERABILIDAD TAREA SEM12"}
 
