@@ -91,7 +91,7 @@ def get_productos(credentials: HTTPBasicCredentials = Depends(security)):
     print (items)
     return items
 
-@app.get("/producto", response_model=List[Producto], tags = ["productos"])
+@app.get("/producto/{producto_id}", response_model=Producto, tags = ["productos"])
 @version(1,0)
 def get_producto():
     itemProducto = list(coleccion.find()) ##devolver toda la informacion de la base de datos.
